@@ -16,3 +16,10 @@
 enum HazardType { NONE=0, BAT=1, PIT=2, WUMPUS=4 };
 
 HazardType check_for_hazards(uint8_t room_idx);
+
+#define BUTTON_UP 0x08
+#define BUTTON_DOWN 0x04
+#define BUTTON_LEFT 0x10
+#define BUTTON_RIGHT 0x02
+#define BUTTON_SELECT 0x01
+#define BUTTON_NONE   0
