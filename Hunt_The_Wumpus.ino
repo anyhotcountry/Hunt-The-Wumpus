@@ -38,9 +38,7 @@
 //       https://github.com/adafruit/Adafruit-MCP23017-Arduino-Library
 // --------------------------------------------------------------------------------
 #include <Wire.h>
-#include <Wire.h>
-#include <Adafruit_RGBLCDShield.h>
-#include <utility/Adafruit_MCP23017.h>
+#include <LiquidCrystal.h>
 #include "Hunt_The_Wumpus.h"
 
 
@@ -126,7 +124,7 @@ const uint8_t menu_col[4][2] = { {0,  3},
 uint8_t selected_menu_idx;
 
 //! The LCD display object.
-Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 //! Enum of backlight colors.
 enum BackLightColor { RED=0x1, YELLOW=0x3, GREEN=0x2, TEAL=0x6, BLUE=0x4, VIOLET=0x5, WHITE=0x7 };
@@ -155,10 +153,42 @@ const int PIT_ICON_IDX = 2;
 //! Index into the bitmap array for the arrow icon.
 const int ARROW_ICON_IDX = 3;
 
+int readButtons(){               // read the buttons
+    int adc_key_in = analogRead(0);       // read the value from the sensor 
+
+    // my buttons when read are centered at these valies: 0, 144, 329, 504, 741
+    // we add approx 50 to those values and check to see if we are close
+    // We make this the 1st option for speed reasons since it will be the most likely result
+
+    if (adc_key_in > 1000) return BUTTON_NONE; 
+    Serial.println(adc_key_in);
+
+    // For V1.1 us this threshold
+    /*
+    if (adc_key_in < 50)   return BUTTON_RIGHT;  
+    if (adc_key_in < 250)  return BUTTON_UP; 
+    if (adc_key_in < 450)  return BUTTON_DOWN; 
+    if (adc_key_in < 650)  return BUTTON_LEFT; 
+    if (adc_key_in < 850)  return BUTTON_SELECT;  
+    */
+
+   // For V1.0 comment the other threshold and use the one below:
+   /* */
+     if (adc_key_in < 50)   return BUTTON_RIGHT;  
+     if (adc_key_in < 195)  return BUTTON_UP; 
+     if (adc_key_in < 380)  return BUTTON_DOWN; 
+     if (adc_key_in < 555)  return BUTTON_LEFT; 
+     if (adc_key_in < 790)  return BUTTON_SELECT;   
+   /* */
+
+    return BUTTON_NONE;                // when all others fail, return this.
+}
+
 //! Perform one time setup for the game and put the game in the splash screen state.
 void setup() {
   // LCD has 16 columns & 2 rows
   lcd.begin(16, 2);
+  Serial.begin(9600);
   
   // Define custom icons
   lcd.createChar(WUMPUS_ICON_IDX, icons[WUMPUS_ICON_IDX]);
@@ -167,7 +197,7 @@ void setup() {
   lcd.createChar(ARROW_ICON_IDX, icons[ARROW_ICON_IDX]);
   
   // Use Pin 0 to seed the random number generator
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(1));
   
   // Initial game state
   state = begin_splash_screen;
@@ -204,8 +234,9 @@ void loop() {
 void read_button_clicks() {
   static uint8_t last_buttons = 0;
   
-  uint8_t buttons = lcd.readButtons();
+  uint8_t buttons = readButtons();
   clicked_buttons = (last_buttons ^ buttons) & (~buttons);
+  // Serial.println(clicked_buttons);
   last_buttons = buttons;
 }
 
@@ -271,7 +302,7 @@ HazardType check_for_hazards(uint8_t room_idx) {
 //! Initial game state, draw the splash screen.
 void begin_splash_screen() {
   lcd.clear();
-  lcd.setBacklight(TEAL);
+  // lcd.setBacklight(TEAL);
   lcd.print(F("HUNT THE WUMPUS"));
   
   state = animate_splash_screen;
@@ -358,7 +389,7 @@ void begin_move_room() {
 
 void begin_bat_move() {
   lcd.clear();
-  lcd.setBacklight(BLUE);
+  // lcd.setBacklight(BLUE);
   lcd.write(BAT_ICON_IDX);
   lcd.setCursor(5, 0);
   lcd.print(F("Bats!"));
@@ -431,9 +462,9 @@ void enter_new_room() {
   lcd.print(arrow_count);
 
   if (adjacent_hazards) {
-    lcd.setBacklight(YELLOW);
+    // lcd.setBacklight(YELLOW);
   } else {
-    lcd.setBacklight(TEAL);
+  //   lcd.setBacklight(TEAL);
   }
 
   lcd.setCursor(1, 1);
@@ -487,7 +518,7 @@ void input_move() {
 // -------------------------------------------------------------------------------
 
 void begin_input_arrow() {
-  lcd.setBacklight(WHITE);
+  // lcd.setBacklight(WHITE);
   lcd.setCursor(0, 0);
   lcd.print(F("Shoot at"));
   
@@ -524,9 +555,9 @@ void cancel_input_arrow() {
   }
 
   if (adjacent_hazards) {
-    lcd.setBacklight(YELLOW);
+    // lcd.setBacklight(YELLOW);
   } else {
-    lcd.setBacklight(TEAL);
+    // lcd.setBacklight(TEAL);
   }
   
   state = begin_input_move;
@@ -534,7 +565,7 @@ void cancel_input_arrow() {
 
 void being_shooting_arrow() {
   lcd.clear();
-  lcd.setBacklight(VIOLET);
+  // lcd.setBacklight(VIOLET);
   lcd.print(F(">-->"));
   
   arrow_count--;
@@ -576,7 +607,7 @@ void arrow_missed() {
 
 void draw_game_over_screen(uint8_t backlight, const __FlashStringHelper *message, uint8_t icon) {
   lcd.clear();
-  lcd.setBacklight(backlight);
+  // lcd.setBacklight(backlight);
   lcd.print(message);
   lcd.setCursor(0, 1);
   lcd.write(icon);
